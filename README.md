@@ -11,84 +11,59 @@ To write a python program for creating File Transfer using TCP Sockets Links
 
 CLIENT
 ```
-import socket
 
-HOST = '127.0.0.1'  
-PORT = 65432  
+import socket 
+s = socket.socket() 
+host = socket.gethostname() 
+port = 60000 
+s.connect((host, port)) 
+s.send("Hello server!".encode()) 
+with open('received_file', 'wb') as f: 
+    while True: 
+        print('receiving data...') 
+        data = s.recv(1024) 
+        print('data=%s', (data)) 
+        if not data: 
+            break 
+        f.write(data) 
+f.close() 
+print('Successfully get the file') 
+s.close() 
+print('connection closed')
 
 
-def receive_file(filename, conn):
-    response = conn.recv(1024).decode('utf-8')
 
-    if response == 'EXISTS':
-        file_size = int(conn.recv(1024).decode('utf-8'))
-        print(f"File '{filename}' exists on server, size: {file_size} bytes.")
-
-        conn.sendall(b'READY')
-
-        with open('received_' + filename, 'wb') as f:
-            total_received = 0
-            while total_received < file_size:
-                data = conn.recv(1024)
-                f.write(data)
-                total_received += len(data)
-                print(f"Received {total_received} of {file_size} bytes")
-
-        print(f"File '{filename}' received and saved as 'received_{filename}'")
-    else:
-        print("File does not exist on the server.")
-
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-    client_socket.connect((HOST, PORT))
-
-    filename = input("Enter the filename you want to download: ")
-    client_socket.sendall(filename.encode('utf-8'))
-
-    receive_file(filename, client_socket) 
 ```
 SERVER
 ```
 
-import socket
-import os
+import socket                    
+port = 60000                    
+s = socket.socket()              
+host = socket.gethostname()      
+s.bind((host, port))              
+s.listen(5)                      
+while True: 
+    conn, addr = s.accept()      
+    data = conn.recv(1024) 
+    print('Server received', repr(data)) 
+    filename='mytext.txt' 
+    f = open(filename,'rb') 
+    l = f.read(1024) 
+    while (l): 
+       conn.send(l) 
+       print('Sent ',repr(l)) 
+       l = f.read(1024) 
+    f.close() 
+    print('Done sending') 
+    conn.send('Thank you for connecting'.encode()) 
+    conn.close()
 
-HOST = '127.0.0.1'  
-PORT = 65432  
-
-def send_file(filename, conn):
-    if os.path.isfile(filename):
-        conn.sendall(b'EXISTS')
-        file_size = os.path.getsize(filename)
-        conn.sendall(str(file_size).encode('utf-8'))
-        client_response = conn.recv(1024).decode('utf-8')
-        if client_response == 'READY':
-            with open(filename, 'rb') as f:
-                chunk = f.read(1024)
-                while chunk:
-                    conn.sendall(chunk)
-                    chunk = f.read(1024)
-            print(f"File '{filename}' sent successfully.")
-    else:
-        conn.sendall(b'NOT_EXISTS')
-
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-    server_socket.bind((HOST, PORT))
-    server_socket.listen()
-
-    print(f"File server is listening on {HOST}:{PORT}")
-    while True:
-        conn, addr = server_socket.accept()
-        with conn:
-            print(f"Connected by {addr}")
-
-            filename = conn.recv(1024).decode('utf-8')
-            print(f"Client requested file: {filename}")
-
-            send_file(filename, conn)
 
 ```
 ## OUPUT
-<img width="1290" height="515" alt="image" src="https://github.com/user-attachments/assets/20a81c52-7c28-4426-b40c-85a824a6f012" />
+<img width="580" height="274" alt="image" src="https://github.com/user-attachments/assets/e8f1e03c-5ae8-4eb1-81cb-e41c7bd1b7d2" />
+
 
 ## RESULT
 Thus, the python program for creating File Transfer using TCP Sockets Links was 
